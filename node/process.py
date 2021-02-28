@@ -30,6 +30,7 @@ def process_dataset(name):
     nx_g = dgl.to_networkx(graph)
 
     diff_adj = compute_ppr(nx_g, 0.2)
+    diff_adj[diff_adj < 0.01] = 0
 
     # if name == 'citeseer':
     #     feat = preprocess_features(feat)

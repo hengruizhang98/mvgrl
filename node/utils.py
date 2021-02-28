@@ -4,7 +4,6 @@ import torch
 from scipy.linalg import fractional_matrix_power, inv
 import scipy.sparse as sp
 
-import dgl
 
 def compute_ppr(graph: nx.Graph, alpha=0.2, self_loop=True):
     a = nx.convert_matrix.to_numpy_array(graph)
