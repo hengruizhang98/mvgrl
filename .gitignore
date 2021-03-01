@@ -1,5 +1,4 @@
 # Byte-compiled / optimized / DLL files
-qm9_v2.zip
 test.py
 __pycache__/
 *.py[cod]
@@ -7,9 +6,6 @@ __pycache__/
 .DS_Store
 .idea
 *.iml
-tes.py
-Test.ipynb
 .ipynb_checkpoints
-readme2.md
 
 
