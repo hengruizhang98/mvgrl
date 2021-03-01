@@ -9,7 +9,7 @@ import dgl
 from dgl.data import CoraGraphDataset, CiteseerGraphDataset
 import torch as th
 
-def process_dataset(name):
+def load(name):
     if name == 'cora':
         dataset = CoraGraphDataset()
     elif name == 'citeseer':
@@ -18,6 +18,8 @@ def process_dataset(name):
     graph = dataset[0]
     feat = graph.ndata.pop('feat')
     label = graph.ndata.pop('label')
+
+    feat = np.array(feat)
 
     train_mask = graph.ndata.pop('train_mask')
     val_mask = graph.ndata.pop('val_mask')
@@ -29,8 +31,8 @@ def process_dataset(name):
 
     nx_g = dgl.to_networkx(graph)
 
+
     diff_adj = compute_ppr(nx_g, 0.2)
-    diff_adj[diff_adj < 0.01] = 0
 
     # if name == 'citeseer':
     #     feat = preprocess_features(feat)
@@ -39,9 +41,11 @@ def process_dataset(name):
     #     epsilon = epsilons[np.argmin([abs(avg_degree - np.argwhere(diff_adj >= e).shape[0] / diff_adj.shape[0])
     #                                   for e in epsilons])]
 
+    adj = nx.to_numpy_array(nx_g)
     diff_edges = np.nonzero(diff_adj)
-    diff_weight = diff_adj[diff_edges]
-    diff_graph = dgl.graph(diff_edges)
+    # diff_weight = diff_adj[diff_edges]
+    # diff_graph = dgl.graph(diff_edges)
+    adj = normalize_adj(adj + sp.eye(adj.shape[0])).todense()
 
-    return graph, diff_graph, feat, label, train_idx, val_idx, test_idx, diff_weight
+    return adj, diff_adj, feat, label, train_idx, val_idx, test_idx
 
