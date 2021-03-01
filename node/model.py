@@ -53,32 +53,33 @@ class Discriminator(nn.Module):
 class Model(nn.Module):
     def __init__(self, in_dim, out_dim):
         super(Model, self).__init__()
-        self.encoder1 = GraphConv(in_dim, out_dim, bias = True, norm = 'none')
+        self.encoder1 = GraphConv(in_dim, out_dim, bias = True, norm = 'both')
         self.encoder2 = GraphConv(in_dim, out_dim, bias = True, norm = 'none')
 
         self.act = nn.Sigmoid()
+        self.act_fn = nn.ReLU()
         self.pooling = AvgPooling()
 
         self.disc = Discriminator(out_dim)
 
-    def get_embedding(self, graph, dif_graph, feat):
+    def get_embedding(self, graph, dif_graph, feat, weight):
         h1 = self.encoder1(graph, feat)
-        h2 = self.encoder2(dif_graph, feat)
+        h2 = self.encoder2(dif_graph, feat, edge_weight = weight)
 
         c = self.pooling(graph, h1)
 
         return (h1+h2).detach(), c.detach()
 
-    def forward(self, graph, dif_graph, feat, shuf_feat):
+    def forward(self, graph, dif_graph, feat, shuf_feat, weight):
 
-        h1 = self.encoder1(graph, feat)
-        h2 = self.encoder2(dif_graph, feat)
+        h1 = self.act_fn(self.encoder1(graph, feat))
+        h2 = self.act_fn(self.encoder2(dif_graph, feat, edge_weight = weight))
 
         c1 = self.act(self.pooling(graph, h1))
         c2 = self.act(self.pooling(dif_graph, h2))
 
         h3 = self.encoder1(graph, shuf_feat)
-        h4 = self.encoder2(dif_graph, shuf_feat)
+        h4 = self.encoder2(dif_graph, shuf_feat, edge_weight = weight)
 
         out = self.disc(h1, h2, h3, h4, c1, c2)
 

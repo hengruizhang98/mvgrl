@@ -7,13 +7,9 @@ __pycache__/
 .DS_Store
 .idea
 *.iml
-gdb9.sdf
-gdb9.sdf.csv
-data/
-data.txt
-qm9/
-qm9_v2.pt
 tes.py
 Test.ipynb
 .ipynb_checkpoints
 readme2.md
+
+
