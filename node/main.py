@@ -91,7 +91,6 @@ if __name__ == '__main__':
             dg = dgl.node_subgraph(diff_graph, list(range(i, i + args.sample_size)))
 
             fts = feat[i: i + args.sample_size]
-            idx = np.random.permutation(args.sample_size)
             shuf_fts = fts[shuf_idx, :]
 
             g.ndata['feat'] = fts
