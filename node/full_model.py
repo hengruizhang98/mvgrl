@@ -13,7 +13,7 @@ class LogReg(nn.Module):
         self.fc = nn.Linear(hid_dim, n_classes)
 
     def forward(self, seq):
-        ret = th.log_softmax(self.fc(seq), dim=-1)
+        ret = self.fc(seq)
         return ret
 
 
@@ -58,9 +58,9 @@ class MVGRL(nn.Module):
     def __init__(self, in_dim, out_dim, k, alpha):
         super(MVGRL, self).__init__()
 
-        self.encoder1 = GraphConv(in_dim, out_dim, norm='both')
+        self.encoder1 = GraphConv(in_dim, out_dim, norm='both', bias = True)
         self.encoder2 = APPNPConv(k, alpha)
-        self.lin = nn.Linear(in_dim, out_dim)
+        self.lin = nn.Linear(in_dim, out_dim, bias = True)
 
         self.disc = Discriminator(out_dim)
         self.pooling = AvgPooling()
@@ -69,7 +69,7 @@ class MVGRL(nn.Module):
         self.act2 = nn.ReLU()
 
     def get_embedding(self, graph, feat):
-        h1 = self.encoder1(graph, feat)
+        h1 = self.encoder1(graph.add_self_loop(), feat)
         h2 = self.lin(self.encoder2(graph, feat))
 
         c = self.pooling(graph, h1)
@@ -77,7 +77,8 @@ class MVGRL(nn.Module):
         return (h1 + h2).detach(), c.detach()
 
     def forward(self, graph, feat1, feat2):
-        h1 = self.encoder1(graph, feat1)
+
+        h1 = self.encoder1(graph.add_self_loop(), feat1)
         h2 = self.lin(self.encoder2(graph, feat1))
 
         h1 = self.act2(h1)
@@ -86,13 +87,14 @@ class MVGRL(nn.Module):
         c1 = self.act1(self.pooling(graph, h1))
         c2 = self.act1(self.pooling(graph, h2))
 
-        h3 = self.encoder1(graph, feat2)
+        h3 = self.encoder1(graph.add_self_loop(), feat2)
         h4 = self.lin(self.encoder2(graph, feat2))
 
         h3 = self.act2(h3)
         h4 = self.act2(h4)
 
         out = self.disc(h1, h2, h3, h4, c1, c2)
+
         return out
 
 
