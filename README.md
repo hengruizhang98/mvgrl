@@ -26,77 +26,48 @@ Author's code: https://github.com/kavehhassani/mvgrl
 
 'Cora', 'Citeseer' and 'Pubmed'
 
-| Dataset | # Nodes  | # Edges    | 
-| ------- | -------- | -----------|
-| Cora    | 19,717   |  88,651    |
-| Citeseer| 130,831  |            |
-| Pubmed  | 130,831  | 12         |
-| QM9     | 130,831  | 12         |
+| Dataset  | # Nodes | # Edges | # Classes |
+| -------- | ------- | ------- | --------- |
+| Cora     | 2,708   | 10,556  | 7         |
+| Citeseer | 3,327   | 9,228   | 6         |
+| Pubmed   | 19,717  | 88,651  | 3         |
 
 
 ## Arguments
 
-##### 	Unsupervised Graph Classification:
+##### 	Graph Classification:
 
-###### Dataset options
 
-```
- --dataname         str     The graph dataset name.               Default is 'MUTAG'.
-```
-
-###### GPU options
 
 ```
---gpu              int     GPU index.                             Default is -1, using CPU.
-```
-
-###### Training options
-
-```
+--dataname         str     The graph dataset name.                Default is 'MUTAG'.
+--gpu              int     GPU index.                             Default is -1, using cpu.
 --epochs           int     Number of training epochs.             Default is 20.
---batch_size       int     Size of a training batch               Default is 128.
---lr               float   Adam optimizer learning rate.          Default is 0.01.
+--batch_size       int     Size of a training batch.              Default is 128.
+--patience         int     Early stopping steps.                  Default is 20.
+--lr1              float   Learning rate of main model.           Default is 0.001.
+--lr2              float   Learning rate of linear classifer.     Default is 0.01.
+--wd1              float   Weight decay of main model.            Default is 0.0.
+--wd2							 float   Weight decay of linear classifier.     Default is 0.0.
+--hid_dim          float   Embedding dimension.                   Default is 512.
 ```
 
-###### Model options
+##### 	Node Classification:
 
 ```
---n_layers         int     Number of GIN layers.                  Default is 3.
---hid_dim          int     Dimension of hidden layer.             Default is 32.
+--dataname         str     The graph dataset name.                Default is 'cora'.
+--gpu              int     GPU index.                             Default is -1, using cpu.
+--epochs           int     Number of training epochs.             Default is 20.
+--batch_size       int     Size of a training batch.              Default is 128.
+--patience         int     Early stopping steps.                  Default is 20.
+--lr1              float   Learning rate of main model.           Default is 0.001.
+--lr2              float   Learning rate of linear classifer.     Default is 0.01.
+--wd1              float   Weight decay of main model.            Default is 0.0.
+--wd2							 float   Weight decay of linear classifier.     Default is 0.0.
+--hid_dim          float   Embedding dimension.                   Default is 512.
 ```
 
-##### 	Semi-supervised Graph Regression:
 
-###### Dataset options
-
-```
- --target          str     The regression Task                    Default is 'mu'.
- --train_num       int     Number of supevised examples.          Default is 5000.
-```
-
-###### GPU options
-
-```
---gpu              int     GPU index.                             Default is -1, using CPU.
-```
-
-###### Training options
-
-```
---epochs           int     Number of training epochs.             Default is 200
---batch_size       int     Size of a training batch               Default is 20.
---val_batch_size   int     Size of a validation batch.            Default is 100
---lr               float   Adam optimizer learning rate.          Default is 0.001.
-```
-
-###### Model options
-
-```
---hid_dim          int     Dimension of hidden layer.             Default is 64.
---reg              int     Regularization weight                  Default is 0.001.
-```
-
-## 
 
 ## How to run examples
 
@@ -118,26 +89,20 @@ Replace 'mu' with other target names above
 
 ## 	Performance
 
-The hyperparameter setting in our implementation is identical to that reported in the paper.
+We use the same  hyper-parameter settings as stated in the original paper.
 
-##### Unsupervised Graph Classification:
+##### Graph Classification:
 
 |      Dataset      | MUTAG |  PTC  | REDDIT-B | REDDIT-M | IMDB-B | IMDB-M |
 | :---------------: | :---: | :---: | :------: | -------- | ------ | ------ |
 | Accuracy Reported | 89.01 | 61.65 |  82.50   | 53.46    | 73.03  | 49.69  |
-|  This repository  | 89.88 | 63.54 |  88.50   | 56.27    | 72.70  | 50.13  |
+|        DGL        | 89.88 | 63.54 |  88.50   | 56.27    | 72.70  | 50.13  |
 
-* REDDIT-M dataset would take a quite long time to load and evaluate. 
+##### Node classification:
 
-##### Semisupervised Graph Regression on QM9:
-
-Here we only provide the results of 'mu', 'alpha', 'homo'.
-
-We find that there's a big gap between the reported RMSE and that of our implementation. We also tried author's code and found that the gap still existed. This issue has been reported in https://github.com/fanyun-sun/InfoGraph/issues/8
-
-|     Target      |   mu   | alpha  |  homo  |
-| :-------------: | :----: | :----: | :----: |
-|  RMSE Reported  | 0.3169 | 0.5444 | 0.0060 |
-|  Author's code  | 0.2411 | 0.5192 | 0.1560 |
-| This repository | 0.2355 | 0.5483 | 0.1581 |
+|      Dataset      |  Cora  | Citeseer | Pubmed |
+| :---------------: | :----: | :------: | :----: |
+| Accuracy Reported | 0.3169 |  0.5444  | 0.0060 |
+|       DGL-1       | 0.2411 |  0.5192  | 0.1560 |
+|       DGL-2       | 0.2355 |  0.5483  | 0.1581 |
 
