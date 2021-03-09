@@ -1,19 +1,29 @@
-from utils import preprocess_features, normalize_adj
-from sklearn.preprocessing import MinMaxScaler
-from utils import compute_ppr
+from scipy.linalg import fractional_matrix_power, inv
 import scipy.sparse as sp
 import networkx as nx
 import numpy as np
 import os
 import dgl
-from dgl.data import CoraGraphDataset, CiteseerGraphDataset
+from dgl.data import CoraGraphDataset, CiteseerGraphDataset, PubmedGraphDataset
 import torch as th
 
-def process_dataset(name):
+def compute_ppr(graph: nx.Graph, alpha=0.2, self_loop=True):
+    a = nx.convert_matrix.to_numpy_array(graph)
+    if self_loop:
+        a = a + np.eye(a.shape[0])                                # A^ = A + I_n
+    d = np.diag(np.sum(a, 1))                                     # D^ = Sigma A^_ii
+    dinv = fractional_matrix_power(d, -0.5)                       # D^(-1/2)
+    at = np.matmul(np.matmul(dinv, a), dinv)                      # A~ = D^(-1/2) x A^ x D^(-1/2)
+    return alpha * inv((np.eye(a.shape[0]) - (1 - alpha) * at))   # a(I_n-(1-a)A~)^-1
+
+
+def process_dataset(name, threshold):
     if name == 'cora':
         dataset = CoraGraphDataset()
     elif name == 'citeseer':
         dataset = CiteseerGraphDataset()
+    elif name == 'pubmed':
+        dataset = PubmedGraphDataset()
 
     graph = dataset[0]
     feat = graph.ndata.pop('feat')
@@ -30,14 +40,7 @@ def process_dataset(name):
     nx_g = dgl.to_networkx(graph)
 
     diff_adj = compute_ppr(nx_g, 0.2)
-    diff_adj[diff_adj < 0.01] = 0
-
-    # if name == 'citeseer':
-    #     feat = preprocess_features(feat)
-    #     epsilons = [1e-5, 1e-4, 1e-3, 1e-2]
-    #     avg_degree = graph.number_of_edges() / graph.number_of_nodes()
-    #     epsilon = epsilons[np.argmin([abs(avg_degree - np.argwhere(diff_adj >= e).shape[0] / diff_adj.shape[0])
-    #                                   for e in epsilons])]
+    diff_adj[diff_adj < threshold] = 0
 
     diff_edges = np.nonzero(diff_adj)
     diff_weight = diff_adj[diff_edges]
