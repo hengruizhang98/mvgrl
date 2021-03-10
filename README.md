@@ -1,26 +1,32 @@
-# mvgrl
-This DGL example implements the model proposed in the paper [Contrastive Multi-View Representation Learning on Graphs](hhttps://arxiv.org/abs/2006.05582).
+# DGL Implementation of MVGRL
+This DGL example implements the model proposed in the paper [Contrastive Multi-View Representation Learning on Graphs](https://arxiv.org/abs/2006.05582).
 
 Paper link: https://arxiv.org/abs/2006.05582
 Author's code: https://github.com/kavehhassani/mvgrl
+
+## Example Implementor
+
+This example was implemented by [Hengrui Zhang](https://github.com/hengruizhang98) when he was an applied scientist intern at AWS Shanghai AI Lab.
 
 ## Dependencies
 
 - Python 3.7
 - PyTorch 1.7.1
 - dgl 0.6.0
+- networkx
+- scipy
 
 ## Datasets
 
 ##### Unsupervised Graph Classification Datasets:
 
- 'MUTAG', 'PTC', 'IMDBBINARY', 'IMDBMULTI', 'REDDITBINARY', 'REDDITMULTI5K' of dgl.data.GINDataset.
+ 'MUTAG', 'PTC_MR', 'IMDB-BINARY', 'IMDB-MULTI', 'REDDIT-BINARY', 'REDDIT-MULTI-5K' of dgl.data.GINDataset.
 
-| Dataset         | MUTAG | PTC   | RDT-B  | RDT-M5K | IMDB-B | IMDB-M |
-| --------------- | ----- | ----- | ------ | ------- | ------ | ------ |
-| # Graphs        | 188   | 344   | 2000   | 4999    | 1000   | 1500   |
-| # Classes       | 2     | 2     | 2      | 5       | 2      | 3      |
-| Avg. Graph Size | 17.93 | 14.29 | 429.63 | 508.52  | 19.77  | 13.00  |
+| Dataset         | MUTAG | PTC_MR | RDT-B  | IMDB-B | IMDB-M |
+| --------------- | ----- | ------ | ------ | ------ | ------ |
+| # Graphs        | 188   | 344    | 2000   | 1000   | 1500   |
+| # Classes       | 2     | 2      | 2      | 2      | 3      |
+| Avg. Graph Size | 17.93 | 14.29  | 429.63 | 19.77  | 13.00  |
 
 ##### Unsupervised Node Classification Datasets:
 
@@ -37,19 +43,16 @@ Author's code: https://github.com/kavehhassani/mvgrl
 
 ##### 	Graph Classification:
 
-
-
 ```
 --dataname         str     The graph dataset name.                Default is 'MUTAG'.
 --gpu              int     GPU index.                             Default is -1, using cpu.
---epochs           int     Number of training epochs.             Default is 20.
---batch_size       int     Size of a training batch.              Default is 128.
+--epochs           int     Number of training periods.            Default is 200.
+--batch_size       int     Size of a training batch.              Default is 64.
 --patience         int     Early stopping steps.                  Default is 20.
---lr1              float   Learning rate of main model.           Default is 0.001.
---lr2              float   Learning rate of linear classifer.     Default is 0.01.
---wd1              float   Weight decay of main model.            Default is 0.0.
---wd2							 float   Weight decay of linear classifier.     Default is 0.0.
---hid_dim          float   Embedding dimension.                   Default is 512.
+--lr               float   Learning rate.           						  Default is 0.001.
+--wd               float   Weight decay.            							Default is 0.0.
+--hid_dim          float   Embedding dimension.                   Default is 32.
+--n_layers         int     Number of GNN layers.                  Default is 4
 ```
 
 ##### 	Node Classification:
@@ -57,7 +60,7 @@ Author's code: https://github.com/kavehhassani/mvgrl
 ```
 --dataname         str     The graph dataset name.                Default is 'cora'.
 --gpu              int     GPU index.                             Default is -1, using cpu.
---epochs           int     Number of training epochs.             Default is 20.
+--epochs           int     Number of training periods.            Default is 20.
 --batch_size       int     Size of a training batch.              Default is 128.
 --patience         int     Early stopping steps.                  Default is 20.
 --lr1              float   Learning rate of main model.           Default is 0.001.
@@ -67,25 +70,47 @@ Author's code: https://github.com/kavehhassani/mvgrl
 --hid_dim          float   Embedding dimension.                   Default is 512.
 ```
 
-
-
 ## How to run examples
 
-Training and testing unsupervised model on MUTAG.(We recommend using cpu)
-```bash
+Graph Classification
+
+```python
+# Enter the 'graph' directory
+cd graph
+
 # MUTAG:
-python unsupervised.py --dataname MUTAG --n_layers 4 --hid_dim 32
+python main.py --dataname MUTAG --epochs 20
+
+# PTC_MR:
+python main.py --dataname PTC_MR --epochs 32 --hid_dim 128
+
+# IMDB-BINARY
+python main.py --dataname IMDB-BINARY --epochs 20 --hid_dim 512 --n_layers 2
+
+# IMDB-MULTI
+python main.py --dataname IMDB-MULTI --epochs 20 --hid_dim 512 --n_layers 2
 ```
-Replace 'MUTAG' with dataname in [MUTAG', 'PTC', 'IMDBBINARY', 'IMDBMULTI', 'REDDITBINARY', 'REDDITMULTI5K'] if you'd like to try other datasets.
+Node Classification
 
-Training and testing semi-supervised model on QM9 for graph property 'mu' with gpu.
+```python
+# Enter the 'node' directory
+cd node
 
-```bash
-# QM9:
-python semisupervised.py --gpu 0 --target mu
+# Cora with full graph
+python main.py --dataname cora
+
+# Cora with sampled subgraphs
+python main_sample.py --dataname cora
+
+# Citeseer with full graph
+python main.py --dataname citeseer --wd1 0.001 --wd2 0.01 --epochs 200
+
+# Citeseer with sampled subgraphs
+python main_sample.py --dataname citeseer --wd2 0.01
+
+# Pubmed with sampled subgraphs
+python main_sample.py --dataname pubmed --sample_size 4000 --epochs 400 --patience 999
 ```
-
-Replace 'mu' with other target names above
 
 ## 	Performance
 
@@ -93,16 +118,21 @@ We use the same  hyper-parameter settings as stated in the original paper.
 
 ##### Graph Classification:
 
-|      Dataset      | MUTAG |  PTC  | REDDIT-B | REDDIT-M | IMDB-B | IMDB-M |
-| :---------------: | :---: | :---: | :------: | -------- | ------ | ------ |
-| Accuracy Reported | 89.01 | 61.65 |  82.50   | 53.46    | 73.03  | 49.69  |
-|        DGL        | 89.88 | 63.54 |  88.50   | 56.27    | 72.70  | 50.13  |
+|      Dataset      | MUTAG | PTC-MR | REDDIT-B | IMDB-B | IMDB-M |
+| :---------------: | :---: | :----: | :------: | :----: | :----: |
+| Accuracy Reported | 89.7  |  62.5  |   84.5   |  74.2  |  51.2  |
+|        DGL        | 89.4  |  62.2  | run fail |  73.8  |  51.1  |
+
+* The datasets that the authors used are slightly different from standard TUDatset (see dgl.data.GINDataset) in the nodes' feature dimensions. (e.g. The node features of 'MUTAG' dataset are 11 dimensional vectors instead of 7)
+* We failed to load REDDIT-BINARY dataset with authors' code.
 
 ##### Node classification:
 
-|      Dataset      |  Cora  | Citeseer | Pubmed |
-| :---------------: | :----: | :------: | :----: |
-| Accuracy Reported | 0.3169 |  0.5444  | 0.0060 |
-|       DGL-1       | 0.2411 |  0.5192  | 0.1560 |
-|       DGL-2       | 0.2355 |  0.5483  | 0.1581 |
+|      Dataset      | Cora | Citeseer | Pubmed |
+| :---------------: | :--: | :------: | :----: |
+| Accuracy Reported | 86.8 |   73.3   |  80.1  |
+|    DGL-sample     | 83.2 |   72.6   |  79.8  |
+|     DGL-full      | 83.5 |   73.7   |  OOM   |
+
+* We faied to reproduce the reported accuracy on 'Cora', even with the authors' codes.
 

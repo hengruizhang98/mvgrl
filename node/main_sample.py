@@ -2,12 +2,13 @@ import argparse
 import numpy as np
 import torch as th
 import torch.nn as nn
-
+import random
+import dgl
 import warnings
 
 warnings.filterwarnings('ignore')
 
-from dataset import process_dataset
+from dataset import process_dataset, process_dataset_appnp
 from model import MVGRL, LogReg
 
 parser = argparse.ArgumentParser(description='mvgrl')
@@ -39,23 +40,31 @@ if __name__ == '__main__':
     # Step 1: Prepare graph data and retrieve train/validation/test index ============================= #
     # Load from DGL dataset
 
-    graph, diff_graph, feat, label, train_idx, val_idx, test_idx, edge_weight = process_dataset(args.dataname,
-                                                                                                args.threshold)
+    if args.dataname == 'pubmed':
+        graph, diff_graph, feat, label, train_idx, val_idx, test_idx, edge_weight = process_dataset_appnp(args.k,
+                                                                                                          args.alpha,
+                                                                                                          args.epsilon)
+    else:
+        graph, diff_graph, feat, label, train_idx, val_idx, test_idx, edge_weight = process_dataset(args.dataname,
+                                                                                                    args.epsilon)
+    edge_weight = th.tensor(edge_weight).float()
+    graph.ndata['feat'] = feat
+    diff_graph.edata['edge_weight'] = edge_weight
+
     n_feat = feat.shape[1]
     n_classes = np.unique(label).shape[0]
-
-    graph = graph.to(args.device)
-    diff_graph = diff_graph.to(args.device)
-    feat = feat.to(args.device)
-    edge_weight = th.tensor(edge_weight).float().to(args.device)
+    edge_weight = th.tensor(edge_weight).float()
 
     train_idx = train_idx.to(args.device)
     val_idx = val_idx.to(args.device)
     test_idx = test_idx.to(args.device)
 
     n_node = graph.number_of_nodes()
-    lbl1 = th.ones(n_node * 2)
-    lbl2 = th.zeros(n_node * 2)
+
+    sample_size = 2000
+
+    lbl1 = th.ones(sample_size * 2)
+    lbl2 = th.zeros(sample_size * 2)
     lbl = th.cat((lbl1, lbl2))
 
     model = MVGRL(n_feat, args.hid_dim)
@@ -67,19 +76,31 @@ if __name__ == '__main__':
 
     loss_fn = nn.BCEWithLogitsLoss()
 
-    print(edge_weight)
-    print(edge_weight.sum())
-
+    node_list = list(range(n_node))
     best = float('inf')
     for epoch in range(args.epochs):
         model.train()
         optimizer.zero_grad()
 
-        shuf_idx = np.random.permutation(n_node)
-        shuf_feat = feat[shuf_idx, :]
-        shuf_feat = shuf_feat.to(args.device)
+        sample_idx = random.sample(node_list, sample_size)
 
-        out = model(graph, diff_graph, feat, shuf_feat, edge_weight)
+        g = dgl.node_subgraph(graph, sample_idx)
+        dg = dgl.node_subgraph(diff_graph, sample_idx)
+
+        f = g.ndata.pop('feat')
+        ew = dg.edata.pop('edge_weight')
+
+        shuf_idx = np.random.permutation(sample_size)
+        sf = f[shuf_idx, :]
+
+        g = g.to(args.device)
+        dg = dg.to(args.device)
+        f = f.to(args.device)
+        ew = ew.to(args.device)
+
+        sf = sf.to(args.device)
+
+        out = model(g, dg, f, sf, ew)
         loss = loss_fn(out, lbl)
 
         loss.backward()
@@ -98,6 +119,11 @@ if __name__ == '__main__':
             break
 
     model.load_state_dict(th.load('model.pkl'))
+
+    graph = graph.to(args.device)
+    diff_graph = diff_graph.to(args.device)
+    feat = feat.to(args.device)
+    edge_weight = edge_weight.to(args.device)
     embeds = model.get_embedding(graph, diff_graph, feat, edge_weight)
 
     train_embs = embeds[train_idx]
