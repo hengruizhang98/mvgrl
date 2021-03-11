@@ -14,15 +14,13 @@ from model import MVGRL, LogReg
 parser = argparse.ArgumentParser(description='mvgrl')
 
 parser.add_argument('--dataname', type=str, default='cora', help='Name of dataset.')
-parser.add_argument('--gpu', type=int, default=0, help='GPU index. Default: 0, using cuda:0.')
+parser.add_argument('--gpu', type=int, default=-1, help='GPU index. Default: -1, using cpu.')
 parser.add_argument('--epochs', type=int, default=500, help='Training epochs.')
 parser.add_argument('--patience', type=int, default=20, help='Patient epochs to wait before early stopping.')
 parser.add_argument('--lr1', type=float, default=0.001, help='Learning rate of mvgrl.')
 parser.add_argument('--lr2', type=float, default=0.01, help='Learning rate of linear evaluator.')
 parser.add_argument('--wd1', type=float, default=0., help='Weight decay of mvgrl.')
 parser.add_argument('--wd2', type=float, default=0., help='Weight decay of linear evaluator.')
-parser.add_argument('--k', type=int, default=20, help='Propagation steps of APPNP')
-parser.add_argument('--alpha', type=float, default=0.2, help='Keep ratio of APPNP')
 parser.add_argument('--epsilon', type=float, default=0.01, help='Edge mask threshold of diffusion graph.')
 parser.add_argument("--hid_dim", type=int, default=512, help='Hidden layer dim.')
 
@@ -37,16 +35,11 @@ else:
 if __name__ == '__main__':
     print(args)
 
-    # Step 1: Prepare graph data and retrieve train/validation/test index ============================= #
-    # Load from DGL dataset
-
+    # Step 1: Prepare data =================================================================== #
     if args.dataname == 'pubmed':
-        graph, diff_graph, feat, label, train_idx, val_idx, test_idx, edge_weight = process_dataset_appnp(args.k,
-                                                                                                          args.alpha,
-                                                                                                          args.epsilon)
+        graph, diff_graph, feat, label, train_idx, val_idx, test_idx, edge_weight = process_dataset_appnp(args.epsilon)
     else:
-        graph, diff_graph, feat, label, train_idx, val_idx, test_idx, edge_weight = process_dataset(args.dataname,
-                                                                                                    args.epsilon)
+        graph, diff_graph, feat, label, train_idx, val_idx, test_idx, edge_weight = process_dataset(args.dataname, args.epsilon)
     edge_weight = th.tensor(edge_weight).float()
     graph.ndata['feat'] = feat
     diff_graph.edata['edge_weight'] = edge_weight
@@ -66,18 +59,21 @@ if __name__ == '__main__':
     lbl1 = th.ones(sample_size * 2)
     lbl2 = th.zeros(sample_size * 2)
     lbl = th.cat((lbl1, lbl2))
+    lbl = lbl.to(args.device)
 
+    # Step 2: Create model =================================================================== #
     model = MVGRL(n_feat, args.hid_dim)
     model = model.to(args.device)
 
-    lbl = lbl.to(args.device)
-
+    # Step 3: Create training components ===================================================== #
     optimizer = th.optim.Adam(model.parameters(), lr=args.lr1, weight_decay=args.wd1)
-
     loss_fn = nn.BCEWithLogitsLoss()
 
     node_list = list(range(n_node))
+
+    # Step 4: Training epochs ================================================================ #
     best = float('inf')
+    cnt_wait = 0
     for epoch in range(args.epochs):
         model.train()
         optimizer.zero_grad()
@@ -134,8 +130,7 @@ if __name__ == '__main__':
     test_labels = label[test_idx]
     accs = []
 
-    print(embeds)
-    print(args.hid_dim, n_classes)
+    # Step 5:  Linear evaluation ========================================================== #
     for _ in range(5):
         model = LogReg(args.hid_dim, n_classes)
         opt = th.optim.Adam(model.parameters(), lr=args.lr2, weight_decay=args.wd2)

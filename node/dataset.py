@@ -85,7 +85,6 @@ def process_dataset(name, epsilon):
     test_idx = th.nonzero(test_mask, as_tuple=False).squeeze()
 
     nx_g = dgl.to_networkx(graph)
-    adj = nx.to_numpy_array(nx_g)
 
     print('computing ppr')
     diff_adj = compute_ppr(nx_g, 0.2)
@@ -107,8 +106,9 @@ def process_dataset(name, epsilon):
 
     return graph, diff_graph, feat, label, train_idx, val_idx, test_idx, diff_weight
 
-def process_dataset_appnp(k, alpha, epsilon):
-
+def process_dataset_appnp(epsilon):
+    k = 20
+    alpha = 0.2
     dataset = PubmedGraphDataset()
     graph = dataset[0]
     feat = graph.ndata.pop('feat')

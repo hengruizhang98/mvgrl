@@ -21,7 +21,7 @@ parser.add_argument('--lr', type=float, default=0.001, help='Learning rate of mv
 parser.add_argument('--wd', type=float, default=0., help='Weight decay of mvgrl.')
 parser.add_argument('--batch_size', type=int, default=64, help='Batch size.')
 parser.add_argument('--n_layers', type=int, default=4, help='Number of GNN layers')
-parser.add_argument("--hid_dim", type=int, default=32, help='Hidden layer dimensionalities.')
+parser.add_argument("--hid_dim", type=int, default=32, help='Hidden layer dim.')
 
 args = parser.parse_args()
 
@@ -51,7 +51,7 @@ def collate(samples):
 
 if __name__ == '__main__':
 
-    # Step 1: Load data =================================================================== #
+    # Step 1: Prepare data =================================================================== #
     dataset = load(args.dataname)
 
     graphs, diff_graphs, labels = map(list, zip(*dataset))
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     print('accuracy_mean, {:.4f}'.format(acc_mean))
 
     best = float('inf')
-
+    cnt_wait = 0
     # Step 4: Training epochs =============================================================== #
     for epoch in range(args.epochs):
         loss_all = 0

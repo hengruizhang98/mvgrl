@@ -97,19 +97,19 @@ Node Classification
 cd node
 
 # Cora with full graph
-python main.py --dataname cora
+python main.py --dataname cora --gpu 0
 
 # Cora with sampled subgraphs
-python main_sample.py --dataname cora
+python main_sample.py --dataname cora --gpu 0
 
 # Citeseer with full graph
-python main.py --dataname citeseer --wd1 0.001 --wd2 0.01 --epochs 200
+python main.py --dataname citeseer --wd1 0.001 --wd2 0.01 --epochs 200 --gpu 0
 
 # Citeseer with sampled subgraphs
-python main_sample.py --dataname citeseer --wd2 0.01
+python main_sample.py --dataname citeseer --wd2 0.01 --gpu 0
 
 # Pubmed with sampled subgraphs
-python main_sample.py --dataname pubmed --sample_size 4000 --epochs 400 --patience 999
+python main_sample.py --dataname pubmed --sample_size 4000 --epochs 400 --patience 999 --gpu 0
 ```
 
 ## 	Performance
@@ -118,10 +118,10 @@ We use the same  hyper-parameter settings as stated in the original paper.
 
 ##### Graph Classification:
 
-|      Dataset      | MUTAG | PTC-MR | REDDIT-B | IMDB-B | IMDB-M |
-| :---------------: | :---: | :----: | :------: | :----: | :----: |
-| Accuracy Reported | 89.7  |  62.5  |   84.5   |  74.2  |  51.2  |
-|        DGL        | 89.4  |  62.2  | run fail |  73.8  |  51.1  |
+|      Dataset      | MUTAG | PTC-MR |  REDDIT-B  | IMDB-B | IMDB-M |
+| :---------------: | :---: | :----: | :--------: | :----: | :----: |
+| Accuracy Reported | 89.7  |  62.5  |    84.5    |  74.2  |  51.2  |
+|        DGL        | 89.4  |  62.2  | run failed |  73.8  |  51.1  |
 
 * The datasets that the authors used are slightly different from standard TUDatset (see dgl.data.GINDataset) in the nodes' feature dimensions. (e.g. The node features of 'MUTAG' dataset are 11 dimensional vectors instead of 7)
 * We failed to load REDDIT-BINARY dataset with authors' code.
