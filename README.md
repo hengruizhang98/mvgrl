@@ -72,7 +72,7 @@ This example was implemented by [Hengrui Zhang](https://github.com/hengruizhang9
 
 ## How to run examples
 
-Graph Classification
+###### Graph Classification
 
 ```python
 # Enter the 'graph' directory
@@ -90,7 +90,14 @@ python main.py --dataname IMDB-BINARY --epochs 20 --hid_dim 512 --n_layers 2
 # IMDB-MULTI
 python main.py --dataname IMDB-MULTI --epochs 20 --hid_dim 512 --n_layers 2
 ```
-Node Classification
+###### Node Classification
+
+For semi-supervised node classification on 'Cora', 'Citeseer' and 'Pubmed', we provide 2 implementions:
+
+1. full-graph training, see 'main.py', where we contrast the local and global representations of the whole graph.
+2. subgraph training, see 'main_sample.py', where we contrast the local and global representations of a sampled subgraph with fixed number of nodes.
+
+For larger graphs(e.g. Pubmed), it would be hard to calculate the graph diffusion matrix(i.e, PPR matrix), so we try to approximate it with [APPNP](https://arxiv.org/abs/1810.05997), see funtion 'process_dataset_appnp'  in 'node/dataset.py' for details.
 
 ```python
 # Enter the 'node' directory
