@@ -90,6 +90,7 @@ if __name__ == '__main__':
             cnt_wait += 1
 
         if cnt_wait == args.patience:
+            print('Early stopping')
             break
 
     model.load_state_dict(th.load('model.pkl'))
@@ -126,6 +127,3 @@ if __name__ == '__main__':
 
     accs = th.stack(accs)
     print(accs.mean().item(), accs.std().item())
-
-
-

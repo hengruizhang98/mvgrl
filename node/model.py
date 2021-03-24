@@ -10,8 +10,8 @@ class LogReg(nn.Module):
 
         self.fc = nn.Linear(hid_dim, n_classes)
 
-    def forward(self, seq):
-        ret = self.fc(seq)
+    def forward(self, x):
+        ret = self.fc(x)
         return ret
 
 
@@ -67,5 +67,3 @@ class MVGRL(nn.Module):
         out = self.disc(h1, h2, h3, h4, c1, c2)
 
         return out
-
-

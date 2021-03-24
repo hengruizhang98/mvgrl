@@ -1,3 +1,4 @@
+''' Code adapted from https://github.com/kavehhassani/mvgrl '''
 import numpy as np
 import torch as th
 import scipy.sparse as sp
@@ -10,18 +11,6 @@ import networkx as nx
 from sklearn.preprocessing import MinMaxScaler
 
 from dgl.nn import APPNPConv
-
-def normalize_adj(adj, self_loop=True):
-    """Symmetrically normalize adjacency matrix."""
-    if self_loop:
-        adj = adj + sp.eye(adj.shape[0])
-    adj = sp.coo_matrix(adj)
-    rowsum = np.array(adj.sum(1))
-    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
-    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
-    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
-
 
 def preprocess_features(features):
     """Row-normalize feature matrix and convert to tuple representation"""
@@ -135,4 +124,3 @@ def process_dataset_appnp(epsilon):
     diff_graph = dgl.graph(diff_edges)
 
     return graph, diff_graph, feat, label, train_idx, val_idx, test_idx, diff_weight
-
